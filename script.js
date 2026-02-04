@@ -4,7 +4,8 @@ const TOTAL_BTC_SUPPLY = 21000000;
 const SATS_PER_BTC = 100000000;
 const HALVING_INTERVAL = 210000;
 const INITIAL_SUBSIDY_SATS = 50 * SATS_PER_BTC;
-const FALLBACK_BLOCK_TIME_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
+const FIXED_BLOCK_TIME_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
+const FALLBACK_BLOCK_TIME_MS = FIXED_BLOCK_TIME_MS;
 const API_POLL_INTERVAL = 30000; // 30 seconds
 const BLOCKS_API_URL = 'https://mempool.space/api/blocks';
 const HEIGHT_API_URL = 'https://mempool.space/api/blocks/tip/height';
@@ -18,6 +19,7 @@ let avgBlockTimeMs = FALLBACK_BLOCK_TIME_MS;
 let lastBlockTimeMs = null;
 let estimatedTargetTimeMs = null;
 let countdownInterval = null;
+let estimateMode = 'average';
 
 // DOM Elements
 const elements = {
@@ -37,6 +39,11 @@ const elements = {
     btcMined: document.getElementById('btc-mined'),
     progressPercent: document.getElementById('progress-percent'),
     progressFill: document.getElementById('progress-fill'),
+    estimateMode: document.getElementById('estimate-mode'),
+    estimateModeLabel: document.getElementById('estimate-mode-label'),
+    modeFixedLabel: document.getElementById('mode-fixed-label'),
+    modeAvgLabel: document.getElementById('mode-avg-label'),
+    avgBlockTime: document.getElementById('avg-block-time'),
     lastUpdate: document.getElementById('last-update')
 };
 
@@ -97,9 +104,13 @@ function calculateAverageBlockTimeMs(blocks) {
     return (totalSeconds / samples) * 1000;
 }
 
+function getActiveBlockTimeMs() {
+    return estimateMode === 'fixed' ? FIXED_BLOCK_TIME_MS : avgBlockTimeMs;
+}
+
 function updateEstimatedTargetTime(blocksLeft, anchorTimeMs = lastBlockTimeMs) {
     if (anchorTimeMs === null || blocksLeft === null) return;
-    estimatedTargetTimeMs = anchorTimeMs + (blocksLeft * avgBlockTimeMs);
+    estimatedTargetTimeMs = anchorTimeMs + (blocksLeft * getActiveBlockTimeMs());
 }
 
 // Fetch current block data from mempool.space
@@ -181,6 +192,14 @@ function formatBtc(amount, maximumFractionDigits = 8) {
         minimumFractionDigits: 0,
         maximumFractionDigits
     });
+}
+
+function formatDurationShort(ms) {
+    if (!Number.isFinite(ms) || ms <= 0) return '--';
+    const totalSeconds = Math.round(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
 }
 
 // Pad number with leading zero
@@ -268,6 +287,20 @@ function updateStatsDisplay(data, msLeft) {
     elements.btcMined.textContent = formatBtc(totalMinedBtc);
     elements.progressPercent.textContent = progressPercent.toFixed(2);
     elements.progressFill.style.width = progressPercent + '%';
+
+    const activeBlockTimeMs = getActiveBlockTimeMs();
+    if (elements.avgBlockTime) {
+        elements.avgBlockTime.textContent = formatDurationShort(activeBlockTimeMs);
+    }
+    if (elements.estimateModeLabel) {
+        elements.estimateModeLabel.textContent = estimateMode === 'fixed'
+            ? 'fixed 10-minute blocks'
+            : 'the last 10 blocks average time';
+    }
+    if (elements.modeFixedLabel && elements.modeAvgLabel) {
+        elements.modeFixedLabel.classList.toggle('active', estimateMode === 'fixed');
+        elements.modeAvgLabel.classList.toggle('active', estimateMode === 'average');
+    }
 }
 
 // Update last update time display
@@ -279,6 +312,23 @@ function updateLastUpdateTime() {
         second: '2-digit'
     });
     elements.lastUpdate.textContent = `Last update: ${timeStr}`;
+}
+
+function setupEstimateModeToggle() {
+    if (!elements.estimateMode) return;
+    elements.estimateMode.checked = estimateMode === 'average';
+    if (elements.modeFixedLabel && elements.modeAvgLabel) {
+        elements.modeFixedLabel.classList.toggle('active', estimateMode === 'fixed');
+        elements.modeAvgLabel.classList.toggle('active', estimateMode === 'average');
+    }
+
+    elements.estimateMode.addEventListener('change', () => {
+        estimateMode = elements.estimateMode.checked ? 'average' : 'fixed';
+        if (currentBlock !== null && lastBlockTimeMs !== null) {
+            updateEstimatedTargetTime(Math.max(0, TARGET_BLOCK - currentBlock), lastBlockTimeMs);
+        }
+        updateDisplay();
+    });
 }
 
 // Main update function
@@ -322,4 +372,5 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 // Initialize
+setupEstimateModeToggle();
 startCountdown();

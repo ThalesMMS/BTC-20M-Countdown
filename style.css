@@ -196,6 +196,91 @@ h2 {
     font-size: 1.1rem;
 }
 
+/* Estimate Toggle */
+.estimate-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.toggle-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.toggle-option {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.toggle-option.active {
+    color: var(--bitcoin-orange);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #1a1a1a;
+    border: 1px solid var(--bg-card-border);
+    transition: 0.2s ease;
+    border-radius: 999px;
+}
+
+.slider:before {
+    position: absolute;
+    content: '';
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    top: 2px;
+    background: var(--text-primary);
+    transition: 0.2s ease;
+    border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+    background: rgba(247, 147, 26, 0.2);
+    border-color: rgba(247, 147, 26, 0.6);
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(22px);
+    background: var(--bitcoin-orange);
+}
+
 /* Progress Section */
 .progress-section {
     margin-bottom: 40px;
