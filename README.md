@@ -21,13 +21,17 @@ A single-page countdown that estimates when Bitcoin’s mined supply reaches 20,
 1. Install dependencies: `npm install`
 2. Compile TypeScript: `npm run build`
 
-`script.ts` is the source; `script.js` is the compiled output used by the page.
+`script.ts` is the source. `script.js` is compiled output and is not committed to the repository.
+If you open `index.html` locally, make sure you run the build first so `script.js` exists.
 
 ## Deploy to GitHub Pages
 1. Push this repo to GitHub.
 2. In the repo settings, go to **Pages**.
 3. Select your default branch and `/ (root)` as the source.
 4. Save and wait for GitHub to publish the site.
+
+This repository includes a GitHub Actions workflow that builds `script.js` and publishes
+the site automatically on pushes to `main`.
 
 ## Data Source
 - mempool.space API (`/api/blocks` and `/api/blocks/tip/height` as a fallback)
