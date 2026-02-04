@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20 Million Bitcoin Countdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟠</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">₿</div>
+            <h1>20 MILLION BITCOIN</h1>
+            <h2>COUNTDOWN</h2>
+        </header>
+
+        <main>
+            <div class="countdown-container">
+                <div class="countdown-item">
+                    <div class="flip-card">
+                        <div class="flip-card-inner" id="days-flip">
+                            <span id="days">--</span>
+                        </div>
+                    </div>
+                    <span class="label">DAYS</span>
+                </div>
+                <div class="countdown-item">
+                    <div class="flip-card">
+                        <div class="flip-card-inner" id="hours-flip">
+                            <span id="hours">--</span>
+                        </div>
+                    </div>
+                    <span class="label">HOURS</span>
+                </div>
+                <div class="countdown-item">
+                    <div class="flip-card">
+                        <div class="flip-card-inner" id="mins-flip">
+                            <span id="mins">--</span>
+                        </div>
+                    </div>
+                    <span class="label">MINS</span>
+                </div>
+                <div class="countdown-item">
+                    <div class="flip-card">
+                        <div class="flip-card-inner" id="secs-flip">
+                            <span id="secs">--</span>
+                        </div>
+                    </div>
+                    <span class="label">SECS</span>
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stat-row">
+                    <span class="stat-label">Current Block</span>
+                    <span class="stat-value" id="current-block">Loading...</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Target Block</span>
+                    <span class="stat-value" id="target-block">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Blocks Remaining</span>
+                    <span class="stat-value" id="blocks-left">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">BTC Remaining</span>
+                    <span class="stat-value" id="btc-left">--</span>
+                </div>
+                <div class="stat-row estimated-date">
+                    <span class="stat-label">Estimated Date</span>
+                    <span class="stat-value" id="estimated-date">--</span>
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p class="progress-text">
+                    <span id="btc-mined">--</span> / 21,000,000 BTC mined
+                    (<span id="progress-percent">--</span>%)
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Data from <a href="https://mempool.space" target="_blank" rel="noopener">mempool.space</a></p>
+            <p class="update-info">Updates every 30 seconds • <span id="last-update">--</span></p>
+            <p class="estimate-note">Estimates use the last 10 blocks average time.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

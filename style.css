@@ -1,0 +1,312 @@
+:root {
+    --bitcoin-orange: #F7931A;
+    --bitcoin-orange-glow: rgba(247, 147, 26, 0.4);
+    --bg-dark: #0d0d0d;
+    --bg-card: rgba(30, 30, 30, 0.7);
+    --bg-card-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fira Code', 'SF Mono', 'Consolas', monospace;
+    background: var(--bg-dark);
+    background-image:
+        radial-gradient(ellipse at top, rgba(247, 147, 26, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom, rgba(247, 147, 26, 0.05) 0%, transparent 50%);
+    min-height: 100vh;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Header */
+header {
+    margin-bottom: 40px;
+}
+
+.logo {
+    font-size: 4rem;
+    color: var(--bitcoin-orange);
+    text-shadow: 0 0 30px var(--bitcoin-orange-glow);
+    margin-bottom: 10px;
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        text-shadow: 0 0 30px var(--bitcoin-orange-glow);
+    }
+    50% {
+        text-shadow: 0 0 50px var(--bitcoin-orange-glow), 0 0 80px var(--bitcoin-orange-glow);
+    }
+}
+
+h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--bitcoin-orange);
+    margin-bottom: 5px;
+}
+
+h2 {
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.5em;
+    color: var(--text-secondary);
+}
+
+/* Countdown */
+.countdown-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.flip-card {
+    width: 80px;
+    height: 100px;
+    perspective: 1000px;
+}
+
+.flip-card-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 50%, #2a2a2a 100%);
+    border-radius: 10px;
+    border: 1px solid var(--bg-card-border);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        0 0 40px var(--bitcoin-orange-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.flip-card-inner::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.flip-card-inner span {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.flip-card-inner.flip {
+    animation: flip 0.6s ease-in-out;
+}
+
+@keyframes flip {
+    0% {
+        transform: rotateX(0);
+    }
+    50% {
+        transform: rotateX(-90deg);
+    }
+    100% {
+        transform: rotateX(0);
+    }
+}
+
+.label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+}
+
+/* Stats Card */
+.stats-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 20px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row.estimated-date {
+    margin-top: 5px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(247, 147, 26, 0.3);
+}
+
+.stat-row.estimated-date .stat-value {
+    font-size: 1rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.stat-value {
+    color: var(--bitcoin-orange);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Progress Section */
+.progress-section {
+    margin-bottom: 40px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--bitcoin-orange), #ffb347);
+    border-radius: 10px;
+    transition: width 1s ease-out;
+    box-shadow: 0 0 20px var(--bitcoin-orange-glow);
+}
+
+.progress-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.progress-text span {
+    color: var(--bitcoin-orange);
+    font-weight: 600;
+}
+
+/* Footer */
+footer {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+footer p + p {
+    margin-top: 6px;
+}
+
+footer a {
+    color: var(--bitcoin-orange);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+footer a:hover {
+    opacity: 0.8;
+}
+
+.update-info {
+    margin-top: 8px;
+    font-size: 0.7rem;
+}
+
+/* Error State */
+.error {
+    color: #ff6b6b;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .logo {
+        font-size: 3rem;
+    }
+
+    h1 {
+        font-size: 1.3rem;
+        letter-spacing: 0.1em;
+    }
+
+    h2 {
+        font-size: 0.8rem;
+        letter-spacing: 0.3em;
+    }
+
+    .countdown-container {
+        gap: 10px;
+    }
+
+    .flip-card {
+        width: 65px;
+        height: 85px;
+    }
+
+    .flip-card-inner span {
+        font-size: 2rem;
+    }
+
+    .label {
+        font-size: 0.6rem;
+    }
+
+    .stats-card {
+        padding: 20px;
+    }
+
+    .stat-label, .stat-value {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .flip-card {
+        width: 55px;
+        height: 75px;
+    }
+
+    .flip-card-inner span {
+        font-size: 1.6rem;
+    }
+}
