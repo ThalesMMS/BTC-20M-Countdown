@@ -17,6 +17,12 @@ A single-page countdown that estimates when Bitcoin’s mined supply reaches 20,
 1. Open `index.html` in a browser.
 2. The page will load live data and update automatically every 30 seconds.
 
+## Development
+1. Install dependencies: `npm install`
+2. Compile TypeScript: `npm run build`
+
+`script.ts` is the source; `script.js` is the compiled output used by the page.
+
 ## Deploy to GitHub Pages
 1. Push this repo to GitHub.
 2. In the repo settings, go to **Pages**.

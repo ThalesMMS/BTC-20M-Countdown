@@ -1,4 +1,10 @@
-"use strict";
+type Block = {
+    height: number;
+    timestamp: number;
+};
+
+type EstimateMode = 'average' | 'fixed';
+
 // Constants
 const TARGET_BTC = 20000000;
 const TOTAL_BTC_SUPPLY = 21000000;
@@ -10,71 +16,80 @@ const FALLBACK_BLOCK_TIME_MS = FIXED_BLOCK_TIME_MS;
 const API_POLL_INTERVAL = 30000; // 30 seconds
 const BLOCKS_API_URL = 'https://mempool.space/api/blocks';
 const HEIGHT_API_URL = 'https://mempool.space/api/blocks/tip/height';
+
 const TARGET_SATS = TARGET_BTC * SATS_PER_BTC;
 const TARGET_BLOCK = blockHeightForSupply(TARGET_SATS);
 if (TARGET_BLOCK === null) {
     throw new Error('Unable to compute target block height.');
 }
 const TARGET_BLOCK_HEIGHT = TARGET_BLOCK;
+
 // State
-let currentBlock = null;
+let currentBlock: number | null = null;
 let avgBlockTimeMs = FALLBACK_BLOCK_TIME_MS;
-let lastBlockTimeMs = null;
-let estimatedTargetTimeMs = null;
-let countdownInterval = null;
-let estimateMode = 'average';
-function getRequiredElement(id) {
+let lastBlockTimeMs: number | null = null;
+let estimatedTargetTimeMs: number | null = null;
+let countdownInterval: number | null = null;
+let estimateMode: EstimateMode = 'average';
+
+function getRequiredElement<T extends HTMLElement>(id: string): T {
     const element = document.getElementById(id);
     if (!element) {
         throw new Error(`Missing element: ${id}`);
     }
-    return element;
+    return element as T;
 }
+
 // DOM Elements
 const elements = {
-    days: getRequiredElement('days'),
-    hours: getRequiredElement('hours'),
-    mins: getRequiredElement('mins'),
-    secs: getRequiredElement('secs'),
-    daysFlip: getRequiredElement('days-flip'),
-    hoursFlip: getRequiredElement('hours-flip'),
-    minsFlip: getRequiredElement('mins-flip'),
-    secsFlip: getRequiredElement('secs-flip'),
-    currentBlock: getRequiredElement('current-block'),
-    targetBlock: getRequiredElement('target-block'),
-    blocksLeft: getRequiredElement('blocks-left'),
-    btcLeft: getRequiredElement('btc-left'),
-    estimatedDate: getRequiredElement('estimated-date'),
-    btcMined: getRequiredElement('btc-mined'),
-    progressPercent: getRequiredElement('progress-percent'),
-    progressFill: getRequiredElement('progress-fill'),
-    estimateMode: getRequiredElement('estimate-mode'),
-    estimateModeLabel: getRequiredElement('estimate-mode-label'),
-    modeFixedLabel: getRequiredElement('mode-fixed-label'),
-    modeAvgLabel: getRequiredElement('mode-avg-label'),
-    avgBlockTime: getRequiredElement('avg-block-time'),
-    lastUpdate: getRequiredElement('last-update')
+    days: getRequiredElement<HTMLSpanElement>('days'),
+    hours: getRequiredElement<HTMLSpanElement>('hours'),
+    mins: getRequiredElement<HTMLSpanElement>('mins'),
+    secs: getRequiredElement<HTMLSpanElement>('secs'),
+    daysFlip: getRequiredElement<HTMLDivElement>('days-flip'),
+    hoursFlip: getRequiredElement<HTMLDivElement>('hours-flip'),
+    minsFlip: getRequiredElement<HTMLDivElement>('mins-flip'),
+    secsFlip: getRequiredElement<HTMLDivElement>('secs-flip'),
+    currentBlock: getRequiredElement<HTMLSpanElement>('current-block'),
+    targetBlock: getRequiredElement<HTMLSpanElement>('target-block'),
+    blocksLeft: getRequiredElement<HTMLSpanElement>('blocks-left'),
+    btcLeft: getRequiredElement<HTMLSpanElement>('btc-left'),
+    estimatedDate: getRequiredElement<HTMLSpanElement>('estimated-date'),
+    btcMined: getRequiredElement<HTMLSpanElement>('btc-mined'),
+    progressPercent: getRequiredElement<HTMLSpanElement>('progress-percent'),
+    progressFill: getRequiredElement<HTMLDivElement>('progress-fill'),
+    estimateMode: getRequiredElement<HTMLInputElement>('estimate-mode'),
+    estimateModeLabel: getRequiredElement<HTMLSpanElement>('estimate-mode-label'),
+    modeFixedLabel: getRequiredElement<HTMLSpanElement>('mode-fixed-label'),
+    modeAvgLabel: getRequiredElement<HTMLSpanElement>('mode-avg-label'),
+    avgBlockTime: getRequiredElement<HTMLSpanElement>('avg-block-time'),
+    lastUpdate: getRequiredElement<HTMLSpanElement>('last-update')
 };
+
 // Calculate total subsidy mined (in satoshis) at a given block height
-function totalSubsidyAtHeight(height) {
-    if (height === null || height < 0)
-        return 0;
+function totalSubsidyAtHeight(height: number | null): number {
+    if (height === null || height < 0) return 0;
+
     let remainingBlocks = height + 1;
     let subsidy = INITIAL_SUBSIDY_SATS;
     let total = 0;
+
     while (remainingBlocks > 0 && subsidy > 0) {
         const blocksThisEra = Math.min(remainingBlocks, HALVING_INTERVAL);
         total += blocksThisEra * subsidy;
         remainingBlocks -= blocksThisEra;
         subsidy = Math.floor(subsidy / 2);
     }
+
     return total;
 }
+
 // Find the first block height where total subsidy >= target (in satoshis)
-function blockHeightForSupply(targetSats) {
+function blockHeightForSupply(targetSats: number): number | null {
     let subsidy = INITIAL_SUBSIDY_SATS;
     let remaining = targetSats;
     let blocks = 0;
+
     while (subsidy > 0) {
         const eraSupply = subsidy * HALVING_INTERVAL;
         if (remaining > eraSupply) {
@@ -83,14 +98,17 @@ function blockHeightForSupply(targetSats) {
             subsidy = Math.floor(subsidy / 2);
             continue;
         }
+
         const blocksNeeded = Math.ceil(remaining / subsidy);
         return blocks + blocksNeeded - 1;
     }
+
     return null;
 }
-function calculateAverageBlockTimeMs(blocks) {
-    if (!Array.isArray(blocks) || blocks.length < 2)
-        return null;
+
+function calculateAverageBlockTimeMs(blocks: Block[]): number | null {
+    if (!Array.isArray(blocks) || blocks.length < 2) return null;
+
     let totalSeconds = 0;
     let samples = 0;
     for (let i = 0; i < blocks.length - 1; i += 1) {
@@ -100,29 +118,32 @@ function calculateAverageBlockTimeMs(blocks) {
             samples += 1;
         }
     }
-    if (samples === 0)
-        return null;
+
+    if (samples === 0) return null;
     return (totalSeconds / samples) * 1000;
 }
-function getActiveBlockTimeMs() {
+
+function getActiveBlockTimeMs(): number {
     return estimateMode === 'fixed' ? FIXED_BLOCK_TIME_MS : avgBlockTimeMs;
 }
-function updateEstimatedTargetTime(blocksLeft, anchorTimeMs = lastBlockTimeMs) {
-    if (anchorTimeMs === null || blocksLeft === null)
-        return;
+
+function updateEstimatedTargetTime(blocksLeft: number | null, anchorTimeMs: number | null = lastBlockTimeMs): void {
+    if (anchorTimeMs === null || blocksLeft === null) return;
     estimatedTargetTimeMs = anchorTimeMs + (blocksLeft * getActiveBlockTimeMs());
 }
+
 // Fetch current block data from mempool.space
-async function fetchBlockData() {
+async function fetchBlockData(): Promise<boolean> {
     try {
         const response = await fetch(BLOCKS_API_URL);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const blocks = (await response.json());
+        const blocks = (await response.json()) as Block[];
         if (!Array.isArray(blocks) || blocks.length === 0) {
             throw new Error('Invalid blocks response');
         }
+
         const sortedBlocks = [...blocks].sort((a, b) => b.height - a.height);
         const tipBlock = sortedBlocks[0];
         const nextHeight = tipBlock.height;
@@ -132,6 +153,7 @@ async function fetchBlockData() {
         if (averageMs) {
             avgBlockTimeMs = averageMs;
         }
+
         const blockTimeMs = tipBlock.timestamp * 1000;
         if (isNewBlock || estimatedTargetTimeMs === null || lastBlockTimeMs !== blockTimeMs) {
             lastBlockTimeMs = blockTimeMs;
@@ -139,13 +161,13 @@ async function fetchBlockData() {
         }
         updateLastUpdateTime();
         return true;
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error fetching block data:', error);
         return fetchBlockHeightFallback();
     }
 }
-async function fetchBlockHeightFallback() {
+
+async function fetchBlockHeightFallback(): Promise<boolean> {
     try {
         const response = await fetch(HEIGHT_API_URL);
         if (!response.ok) {
@@ -163,52 +185,55 @@ async function fetchBlockHeightFallback() {
         }
         updateLastUpdateTime();
         return true;
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error fetching block height:', error);
         elements.currentBlock.classList.add('error');
         elements.currentBlock.textContent = 'API Error';
         return false;
     }
 }
+
 // Calculate remaining blocks, BTC, and total mined
-function calculateRemaining() {
-    if (currentBlock === null)
-        return null;
+function calculateRemaining(): { blocksLeft: number; totalMinedSats: number; btcLeftSats: number } | null {
+    if (currentBlock === null) return null;
+
     const blocksLeft = Math.max(0, TARGET_BLOCK_HEIGHT - currentBlock);
     const totalMinedSats = totalSubsidyAtHeight(currentBlock);
     const btcLeftSats = Math.max(0, TARGET_SATS - totalMinedSats);
+
     return { blocksLeft, totalMinedSats, btcLeftSats };
 }
+
 // Format number with commas
-function formatNumber(num) {
+function formatNumber(num: number): string {
     return num.toLocaleString('en-US');
 }
-function formatBtc(amount, maximumFractionDigits = 8) {
+
+function formatBtc(amount: number, maximumFractionDigits = 8): string {
     return amount.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits
     });
 }
-function formatDurationShort(ms) {
-    if (!Number.isFinite(ms) || ms <= 0)
-        return '--';
+
+function formatDurationShort(ms: number): string {
+    if (!Number.isFinite(ms) || ms <= 0) return '--';
     const totalSeconds = Math.round(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
 }
+
 // Pad number with leading zero
-function padZero(num) {
+function padZero(num: number): string {
     return String(Math.floor(num)).padStart(2, '0');
 }
+
 // Trigger flip animation
-function triggerFlip(element, newValue) {
-    var _a;
+function triggerFlip(element: HTMLElement, newValue: string): void {
     const span = element.querySelector('span');
-    if (!span)
-        return;
-    const currentValue = (_a = span.textContent) !== null && _a !== void 0 ? _a : '';
+    if (!span) return;
+    const currentValue = span.textContent ?? '';
     if (currentValue !== newValue) {
         element.classList.add('flip');
         setTimeout(() => {
@@ -219,8 +244,9 @@ function triggerFlip(element, newValue) {
         }, 600);
     }
 }
+
 // Update countdown display
-function updateCountdownDisplay(msLeft) {
+function updateCountdownDisplay(msLeft: number | null): void {
     if (msLeft === null) {
         triggerFlip(elements.daysFlip, '--');
         triggerFlip(elements.hoursFlip, '--');
@@ -228,25 +254,29 @@ function updateCountdownDisplay(msLeft) {
         triggerFlip(elements.secsFlip, '--');
         return;
     }
+
     const totalSeconds = Math.floor(msLeft / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
+
     const daysStr = padZero(days);
     const hoursStr = padZero(hours);
     const minsStr = padZero(mins);
     const secsStr = padZero(secs);
+
     // Update with flip animation
     triggerFlip(elements.daysFlip, daysStr);
     triggerFlip(elements.hoursFlip, hoursStr);
     triggerFlip(elements.minsFlip, minsStr);
     triggerFlip(elements.secsFlip, secsStr);
 }
+
 // Format estimated date
-function formatEstimatedDate(msLeft) {
+function formatEstimatedDate(msLeft: number): string {
     const estimatedDate = new Date(Date.now() + msLeft);
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
         weekday: 'short',
         year: 'numeric',
         month: 'short',
@@ -257,28 +287,31 @@ function formatEstimatedDate(msLeft) {
     };
     return estimatedDate.toLocaleString('en-US', options);
 }
+
 // Update stats display
-function updateStatsDisplay(data, msLeft) {
+function updateStatsDisplay(data: { blocksLeft: number; totalMinedSats: number; btcLeftSats: number }, msLeft: number | null): void {
     elements.currentBlock.classList.remove('error');
-    elements.currentBlock.textContent = formatNumber(currentBlock !== null && currentBlock !== void 0 ? currentBlock : 0);
+    elements.currentBlock.textContent = formatNumber(currentBlock ?? 0);
     elements.targetBlock.textContent = formatNumber(TARGET_BLOCK_HEIGHT);
     elements.blocksLeft.textContent = formatNumber(data.blocksLeft);
     elements.btcLeft.textContent = `${formatBtc(data.btcLeftSats / SATS_PER_BTC)} BTC`;
+
     if (data.blocksLeft === 0) {
         elements.estimatedDate.textContent = 'Reached';
-    }
-    else if (msLeft !== null) {
+    } else if (msLeft !== null) {
         elements.estimatedDate.textContent = formatEstimatedDate(msLeft);
-    }
-    else {
+    } else {
         elements.estimatedDate.textContent = '--';
     }
+
     // Update progress
     const totalMinedBtc = data.totalMinedSats / SATS_PER_BTC;
     const progressPercent = Math.min((data.totalMinedSats / (TOTAL_BTC_SUPPLY * SATS_PER_BTC)) * 100, 100);
+
     elements.btcMined.textContent = formatBtc(totalMinedBtc);
     elements.progressPercent.textContent = progressPercent.toFixed(2);
     elements.progressFill.style.width = `${progressPercent}%`;
+
     const activeBlockTimeMs = getActiveBlockTimeMs();
     elements.avgBlockTime.textContent = formatDurationShort(activeBlockTimeMs);
     elements.estimateModeLabel.textContent = estimateMode === 'fixed'
@@ -287,8 +320,9 @@ function updateStatsDisplay(data, msLeft) {
     elements.modeFixedLabel.classList.toggle('active', estimateMode === 'fixed');
     elements.modeAvgLabel.classList.toggle('active', estimateMode === 'average');
 }
+
 // Update last update time display
-function updateLastUpdateTime() {
+function updateLastUpdateTime(): void {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', {
         hour: '2-digit',
@@ -297,10 +331,12 @@ function updateLastUpdateTime() {
     });
     elements.lastUpdate.textContent = `Last update: ${timeStr}`;
 }
-function setupEstimateModeToggle() {
+
+function setupEstimateModeToggle(): void {
     elements.estimateMode.checked = estimateMode === 'average';
     elements.modeFixedLabel.classList.toggle('active', estimateMode === 'fixed');
     elements.modeAvgLabel.classList.toggle('active', estimateMode === 'average');
+
     elements.estimateMode.addEventListener('change', () => {
         estimateMode = elements.estimateMode.checked ? 'average' : 'fixed';
         if (currentBlock !== null && lastBlockTimeMs !== null) {
@@ -309,32 +345,39 @@ function setupEstimateModeToggle() {
         updateDisplay();
     });
 }
+
 // Main update function
-function updateDisplay() {
+function updateDisplay(): void {
     const data = calculateRemaining();
     if (!data) {
         updateCountdownDisplay(null);
         return;
     }
+
     const msLeft = estimatedTargetTimeMs === null
         ? null
         : Math.max(0, estimatedTargetTimeMs - Date.now());
+
     updateCountdownDisplay(msLeft);
     updateStatsDisplay(data, msLeft);
 }
+
 // Start the countdown
-async function startCountdown() {
+async function startCountdown(): Promise<void> {
     // Initial fetch
     await fetchBlockData();
     updateDisplay();
+
     // Update countdown every second
     countdownInterval = window.setInterval(updateDisplay, 1000);
+
     // Fetch new block height every 30 seconds
     window.setInterval(async () => {
         await fetchBlockData();
         updateDisplay();
     }, API_POLL_INTERVAL);
 }
+
 // Handle visibility change (refresh data when tab becomes visible)
 document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
@@ -342,6 +385,7 @@ document.addEventListener('visibilitychange', async () => {
         updateDisplay();
     }
 });
+
 // Initialize
 setupEstimateModeToggle();
 startCountdown();
